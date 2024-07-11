@@ -1,6 +1,7 @@
 import express from 'express';
 import puppeteer from 'puppeteer';
 import { default as PQueue } from 'p-queue';
+import { uploadFile } from './oss/index.js';
 import crypto from 'crypto';
 import sharp from 'sharp';
 
@@ -46,7 +47,7 @@ app.get('/screenshot', async (req, res) => {
   const height = parseInt(req.query.height, 10) || null;
   const fullPage = req.query.fullPage === 'true';
   const quality = parseInt(req.query.quality, 10) || 80; // Default quality to 80 if not provided
-
+  const resType = req.query.resType || 'buffer';
   if (!url) {
     return res.status(400).send('URL parameter is missing');
   }
@@ -102,16 +103,44 @@ app.get('/screenshot', async (req, res) => {
       // Generate a random file name
       const randomFileName = `screenshot_${generateRandomString(8)}.jpg`;
 
-      res.setHeader('Content-Disposition', `attachment; filename=${randomFileName}`);
-      res.setHeader('Content-Type', 'image/jpeg');
-      res.send(compressedBuffer);
+      if (resType === 'buffer') {
+        res.setHeader('Content-Disposition', 'attachment; filename=' + randomFileName);
+        res.setHeader('Content-Type', 'image/jpeg');
+        res.send(compressedBuffer);
+        return;
+      }
+      if (resType === 'oss') {
+        const upFileRes = await uploadFile(compressedBuffer, randomFileName);
+        res.json({
+          success: true,
+          message: '执行成功',
+          reason: null,
+          code: '200',
+          data: {
+            filePath: `https://static.aiwobeauty.com/${upFileRes.key}`
+          }
+        });
+        return;
+      }
     } catch (error) {
       console.error(`Failed to capture screenshot: ${error.message}`);
-      res.status(500).send(`Failed to capture screenshot: ${error.message}`);
+      res.status(500).json({
+        success: false,
+        message: '上传失败',
+        reason: error.message,
+        code: '500',
+        data: null
+      });
     }
   }).catch(error => {
     console.error(`Queue error: ${error.message}`);
-    res.status(500).send(`Queue error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: '系统错误',
+      reason: error.message,
+      code: '500',
+      data: null
+    });
   });
 });
 
