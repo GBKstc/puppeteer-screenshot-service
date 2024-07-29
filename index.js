@@ -103,6 +103,7 @@ app.get('/screenshot', async (req, res) => {
         const element = await page.$('#' + eleId); // 替换 'selector' 为你的目标元素选择器
         // 确保元素存在
         if (!element) {
+          await browser.close();
           console.log('找不到 id 为 ' + eleId + ' 的元素');
           return new Error('找不到 id 为 ' + eleId + ' 的元素');
         }
