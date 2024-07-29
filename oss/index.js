@@ -33,7 +33,6 @@ export const computeSignature = (accessKeySecret, canonicalString) => {
 
 // 获取 STS Token
 const url = 'https://platformpro.aiwobeauty.com/api/aiwo-plat-oss/sts/getStsToken';
-
 const postData = JSON.stringify({
   // 如果需要传递请求体，请在这里添加
   // data: 'value'

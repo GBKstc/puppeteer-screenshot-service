@@ -6,7 +6,7 @@ import crypto from 'crypto';
 import sharp from 'sharp';
 
 const app = express();
-const port = 3000;
+const port = 3001;
 
 // Create a queue with concurrency of 1 (i.e., one screenshot at a time)
 const queue = new PQueue({ concurrency: 1 });
@@ -41,13 +41,18 @@ function sleep(ms) {
 }
 
 app.get('/screenshot', async (req, res) => {
-  const url = req.query.url;
+
+  const encodedUrl = req.query.url;
+  const url = decodeURIComponent(encodedUrl); // 解码 URL
+  
   const type = req.query.type;
   const width = parseInt(req.query.width, 10) || null;
   const height = parseInt(req.query.height, 10) || null;
   const fullPage = req.query.fullPage === 'true';
   const quality = parseInt(req.query.quality, 10) || 80; // Default quality to 80 if not provided
-  const resType = req.query.resType || 'buffer';
+  const resType = req.query.resType || 'buffer'; //oss 或者 buffer 默认是buffer
+  const eleId = req.query.eleId || null;  //如果是有值的 就是元素截图
+
   if (!url) {
     return res.status(400).send('URL parameter is missing');
   }
@@ -91,10 +96,21 @@ app.get('/screenshot', async (req, res) => {
         // Scroll to load lazy-loaded content if fullPage is true
         await autoScroll(page);
       }
+      let screenshotBuffer = null;
 
-      const screenshotBuffer = await page.screenshot({ fullPage: fullPage });
+      if (eleId) {
+        // 等待目标元素加载并选择它
+        const element = await page.$('#' + eleId); // 替换 'selector' 为你的目标元素选择器
+        // 确保元素存在
+        if (!element) {
+          console.log('找不到 id 为 ' + eleId + ' 的元素');
+          return new Error('找不到 id 为 ' + eleId + ' 的元素');
+        }
+        screenshotBuffer = await element.screenshot({});
+      } else {
+        screenshotBuffer = await page.screenshot({ fullPage });
+      }
       await browser.close();
-
       // Compress the screenshot using sharp
       const compressedBuffer = await sharp(screenshotBuffer)
         .jpeg({ quality: quality })
