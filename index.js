@@ -6,7 +6,7 @@ import crypto from 'crypto';
 import sharp from 'sharp';
 
 const app = express();
-const port = 3001;
+const port = 3000;
 
 // Create a queue with concurrency of 1 (i.e., one screenshot at a time)
 const queue = new PQueue({ concurrency: 1 });
@@ -44,7 +44,7 @@ app.get('/screenshot', async (req, res) => {
 
   const encodedUrl = req.query.url;
   const url = decodeURIComponent(encodedUrl); // 解码 URL
-  
+
   const type = req.query.type;
   const width = parseInt(req.query.width, 10) || null;
   const height = parseInt(req.query.height, 10) || null;
