@@ -117,13 +117,21 @@ app.get('/screenshot', async (req, res) => {
         .jpeg({ quality: quality })
         .toBuffer();
 
+      const base64String = compressedBuffer.toString('base64');
       // Generate a random file name
       const randomFileName = `screenshot_${generateRandomString(8)}.jpg`;
 
       if (resType === 'buffer') {
-        res.setHeader('Content-Disposition', 'attachment; filename=' + randomFileName);
-        res.setHeader('Content-Type', 'image/jpeg');
-        res.send(compressedBuffer);
+        // res.setHeader('Content-Disposition', 'attachment; filename=' + randomFileName);
+        // res.setHeader('Content-Type', 'image/jpeg');
+        // res.send(compressedBuffer);
+        // 将 Buffer 转换为 Base64 字符串
+        const base64String = compressedBuffer.toString('base64');
+        // 生成 Data URL
+        const mimeType = 'image/jpeg'; // 根据实际格式设置 MIME 类型
+        const dataUrl = `data:${mimeType};base64,${base64String}`;
+        // 返回 Base64 数据作为 JSON 响应
+        res.json({ image: dataUrl });
         return;
       }
       if (resType === 'oss') {
