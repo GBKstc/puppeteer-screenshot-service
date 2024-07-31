@@ -9,7 +9,7 @@ const app = express();
 const port = 3000;
 
 // Create a queue with concurrency of 1 (i.e., one screenshot at a time)
-const queue = new PQueue({ concurrency: 1 });
+const queue = new PQueue({ concurrency: 5 });
 
 // Function to generate a random string
 function generateRandomString(length) {
@@ -40,6 +40,11 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+let browser;
+(async () => {
+  browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+})();
+
 app.get('/screenshot', async (req, res) => {
 
   const encodedUrl = req.query.url;
@@ -60,9 +65,9 @@ app.get('/screenshot', async (req, res) => {
   // Add the screenshot task to the queue
   queue.add(async () => {
     try {
-      const browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-      });
+      // const browser = await puppeteer.launch({
+      //   args: ['--no-sandbox', '--disable-setuid-sandbox']
+      // });
       const page = await browser.newPage();
 
       if (type === 'mobile') {
