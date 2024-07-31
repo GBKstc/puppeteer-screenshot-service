@@ -96,7 +96,7 @@ app.get('/screenshot', async (req, res) => {
       // Check if fullPage is true, if not, wait for the lazy-loaded content
       if (!fullPage) {
         // Wait for a few seconds to ensure lazy-loaded content is loaded
-        await sleep(3000);
+        await page.waitForFunction(() => Array.from(document.images).every(img => img.complete), { timeout: 10000 });
       } else {
         // Scroll to load lazy-loaded content if fullPage is true
         await autoScroll(page);
@@ -108,7 +108,7 @@ app.get('/screenshot', async (req, res) => {
         const element = await page.$('#' + eleId); // 替换 'selector' 为你的目标元素选择器
         // 确保元素存在
         if (!element) {
-          await browser.close();
+          await page.close();
           console.log('找不到 id 为 ' + eleId + ' 的元素');
           return new Error('找不到 id 为 ' + eleId + ' 的元素');
         }
@@ -116,7 +116,7 @@ app.get('/screenshot', async (req, res) => {
       } else {
         screenshotBuffer = await page.screenshot({ fullPage });
       }
-      await browser.close();
+      await page.close();
       // Compress the screenshot using sharp
       const compressedBuffer = await sharp(screenshotBuffer)
         .jpeg({ quality: quality })
@@ -176,4 +176,10 @@ app.get('/screenshot', async (req, res) => {
 
 app.listen(port, () => {
   console.log(`Screenshot service listening at http://localhost:${port}`);
+});
+
+process.on('exit', async () => {
+  if (browser) {
+    await browser.close();
+  }
 });
