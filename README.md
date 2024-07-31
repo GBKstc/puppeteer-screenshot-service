@@ -1,138 +1,133 @@
-# Puppeteer Screenshot Service
+# Puppeteer 截图服务
 
-This project provides a web service to capture screenshots of web pages using Puppeteer. It supports various features such as custom viewport sizes, full-page screenshots, and image compression using the `sharp` library. Additionally, it can be run as a Docker container for easy deployment.
+该项目提供了一个使用 Puppeteer 捕获网页截图的 Web 服务。它支持各种功能，例如自定义视口大小、全页面截图以及使用 `sharp` 库进行图像压缩。此外，它还可以作为 Docker 容器运行，以便轻松部署。
 
-## 中文说明
+## 功能特点
 
-[中文说明](README_CN.md)
+- 捕获网页截图。
+- 支持移动和桌面视口。
+- 可自定义视口尺寸。
+- 全页面截图。
+- 使用 `sharp` 进行图像压缩。
 
-## Features
+## 先决条件
 
-- Capture screenshots of web pages.
-- Support for mobile and desktop viewports.
-- Customizable viewport dimensions.
-- Full-page screenshots.
-- Image compression using `sharp`.
+- Node.js（推荐 v16 或更高版本）
+- npm（推荐 v7 或更高版本）
+- Docker（可选，用于容器化部署）
 
-## Prerequisites
+## 安装
 
-- Node.js (v16 or higher recommended)
-- npm (v7 or higher recommended)
-- Docker (optional, for containerized deployment)
-
-## Installation
-
-1. Clone the repository:
+1. 克隆存储库：
     ```sh
     git clone https://github.com/yourusername/puppeteer-screenshot-service.git
     cd puppeteer-screenshot-service
     ```
 
-2. Install the dependencies:
+2. 安装依赖项：
     ```sh
     npm install
     ```
 
-## Usage
+## 使用方法
 
-### Running as a Node.js Application
+### 作为 Node.js 应用程序运行
 
-1. Start the server:
+1. 启动服务器：
     ```sh
     node index.js
     ```
 
-2. The service will be available at `http://localhost:3000`.
+2. 服务将在 `http://localhost:3000` 上可用。
 
-### Running as a Docker Container
+### 作为 Docker 容器运行
 
-1. Build the Docker image:
+1. 构建 Docker 镜像：
     ```sh
     docker build -t puppeteer-screenshot-service .
     ```
 
-2. Run the Docker container:
+2. 运行 Docker 容器：
     ```sh
     docker run -d -p 3000:3000 puppeteer-screenshot-service
     ```
 
-## API Endpoints
+## API 端点
 
-### Capture Screenshot
+### 截图
 
-- **URL**: `/screenshot`
-- **Method**: `GET`
-- **Query Parameters**:
-  - `url` (required): The URL of the web page to capture.
-  - `type` (optional): The type of device to emulate (`mobile` for iPhone 15).
-  - `width` (optional): The viewport width in pixels.
-  - `height` (optional): The viewport height in pixels.
-  - `fullPage` (optional): Whether to capture a full-page screenshot (`true` or `false`).
-  - `quality` (optional): The quality of the output image (1-100, default is 80).
+- **URL**：`/screenshot`
+- **方法**：`GET`
+- **查询参数**：
+  - `url`（必填）：要捕获的网页的 URL。
+  - `type`（可选）：要模拟的设备类型（`mobile` 用于 iPhone 15）。
+  - `width`（可选）：视口宽度（以像素为单位）。
+  - `height`（可选）：视口高度（以像素为单位）。
+  - `fullPage`（可选）：是否捕获全页面截图（`true` 或 `false`）。
+  - `quality`（可选）：输出图像的质量（1-100，默认为 80）。
 
-- **Response**: 
+- **响应**： 
   - Content-Disposition: attachment; filename=screenshot_<random_string>.jpg
   - Content-Type: image/jpeg
 
+## API 请求方法
 
-## API Request Methods
+| 方法   | 端点            | 描述                 |
+|--------|-----------------|----------------------|
+| GET    | `/screenshot`   | 捕获网页的截图。     |
 
-| Method | Endpoint         | Description                              |
-|--------|------------------|------------------------------------------|
-| GET    | `/screenshot`    | Capture a screenshot of a webpage.       |
+### 查询参数
 
-### Query Parameters
+| 参数       | 类型    | 必填   | 描述                                   |
+|------------|---------|--------|----------------------------------------|
+| `url`      | 字符串  | 是     | 要捕获的网页 URL。                    |
+| `type`     | 字符串  | 否     | 要模拟的设备类型（`mobile` 用于 iPhone 15）。 |
+| `width`    | 整数    | 否     | 视口宽度（以像素为单位）。            |
+| `height`   | 整数    | 否     | 视口高度（以像素为单位）。            |
+| `fullPage` | 布尔值  | 否     | 是否捕获全页面截图（`true` 或 `false`）。  |
+| `quality`  | 整数    | 否     | 输出图像的质量（1-100，默认为 80）。    |
 
-| Parameter | Type    | Required | Description                                           |
-|-----------|---------|----------|-------------------------------------------------------|
-| `url`     | String  | Yes      | The URL of the webpage to capture.                    |
-| `type`    | String  | No       | The type of device to emulate (`mobile` for iPhone 15). |
-| `width`   | Integer | No       | The viewport width in pixels.                        |
-| `height`  | Integer | No       | The viewport height in pixels.                       |
-| `fullPage`| Boolean | No       | Whether to capture a full-page screenshot (`true` or `false`). |
-| `quality` | Integer | No       | The quality of the output image (1-100, default is 80). |
+### 示例
 
-### Examples
-
-1. **Default (1920x1080) Screenshot**:
+1. **默认（1920x1080）截图**：
     ```sh
     curl "http://localhost:3000/screenshot?url=https://example.com" --output screenshot_default.jpg
     ```
 
-2. **Mobile (iPhone 15) Screenshot**:
+2. **移动设备（iPhone 15）截图**：
     ```sh
     curl "http://localhost:3000/screenshot?url=https://example.com&type=mobile" --output screenshot_mobile.jpg
     ```
 
-3. **Custom Dimensions (1024x768) Screenshot**:
+3. **自定义尺寸（1024x768）截图**：
     ```sh
     curl "http://localhost:3000/screenshot?url=https://example.com&width=1024&height=768" --output screenshot_custom.jpg
     ```
 
-4. **Full Page Screenshot**:
+4. **全页面截图**：
     ```sh
     curl "http://localhost:3000/screenshot?url=https://example.com&fullPage=true" --output screenshot_fullpage.jpg
     ```
 
-5. **Custom Quality (e.g., quality=50)**:
+5. **自定义质量（例如，quality=50）**：
     ```sh
     curl "http://localhost:3000/screenshot?url=https://example.com&quality=50" --output screenshot_compressed.jpg
     ```
 
+## 配置
 
-## Configuration
+- **`index.js`**：这是设置 Express 服务器、Puppeteer 和 `sharp` 图像处理的主文件。
+- **`package.json`**：包含项目元数据和依赖项。
 
-- **`index.js`**: This is the main file that sets up the Express server, Puppeteer, and `sharp` for image processing.
-- **`package.json`**: Contains project metadata and dependencies.
+## 错误处理
 
-## Error Handling
+如果截图捕获失败，服务器将以 500 状态码和错误消息作为响应。
 
-If a screenshot capture fails, the server will respond with a 500 status code and an error message.
+## 贡献
 
-## Contributing
+如果您发现任何错误或对改进有建议，请随时提交问题或拉取请求。
 
-Feel free to submit issues or pull requests if you find any bugs or have suggestions for improvements.
+## 许可证
 
-## License
+本项目基于 GNU 许可证。有关详细信息，请参阅 `LICENSE` 文件。
 
-This project is licensed under the GNU GENERAL PUBLIC LICENSE. See the `LICENSE` file for details.
