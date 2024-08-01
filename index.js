@@ -4,6 +4,7 @@ import { default as PQueue } from 'p-queue';
 import { uploadFile } from './oss/index.js';
 import crypto from 'crypto';
 import sharp from 'sharp';
+// import rateLimit from 'express-rate-limit';
 
 const app = express();
 const port = 3000;
@@ -42,8 +43,24 @@ function sleep(ms) {
 
 let browser;
 (async () => {
-  browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  browser = await puppeteer.launch({
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--font-render-hinting=medium',
+      '--disable-font-subpixel-positioning'
+    ]
+  });
 })();
+
+// const limiter = rateLimit({
+//   windowMs: 60 * 1000, // 1 minute window
+//   max: 60, // limit each IP to 60 requests per windowMs
+//   message: 'Too many requests from this IP, please try again later.'
+// });
+
+// app.use(limiter);
 
 app.get('/screenshot', async (req, res) => {
 
@@ -57,7 +74,7 @@ app.get('/screenshot', async (req, res) => {
   const quality = parseInt(req.query.quality, 10) || 80; // Default quality to 80 if not provided
   const resType = req.query.resType || 'buffer'; //oss 或者 buffer 默认是buffer
   const eleId = req.query.eleId || null;  //如果是有值的 就是元素截图
-
+  console.log(`[${new Date().toISOString()}] Received request for URL: ${url}`);
   if (!url) {
     return res.status(400).send('URL parameter is missing');
   }
@@ -65,9 +82,8 @@ app.get('/screenshot', async (req, res) => {
   // Add the screenshot task to the queue
   queue.add(async () => {
     try {
-      // const browser = await puppeteer.launch({
-      //   args: ['--no-sandbox', '--disable-setuid-sandbox']
-      // });
+      const start = Date.now();
+      console.log(`[${new Date().toISOString()}] Processing screenshot for URL: ${url}`);
       const page = await browser.newPage();
 
       if (type === 'mobile') {
@@ -92,11 +108,15 @@ app.get('/screenshot', async (req, res) => {
 
       // Increase the navigation timeout or disable it
       await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
-
+      console.log(`[${new Date().toISOString()}] Page loaded for URL: ${url}`);
       // Check if fullPage is true, if not, wait for the lazy-loaded content
       if (!fullPage) {
-        // Wait for a few seconds to ensure lazy-loaded content is loaded
-        await page.waitForFunction(() => Array.from(document.images).every(img => img.complete), { timeout: 10000 });
+        try {
+          // Wait for a few seconds to ensure lazy-loaded content is loaded
+          await page.waitForFunction(() => Array.from(document.images).every(img => img.complete), { timeout: 10000 });
+        } catch (e) {
+          console.log(`[${new Date().toISOString()}] 图片未加载完成，但继续处理: ${url}`);
+        }
       } else {
         // Scroll to load lazy-loaded content if fullPage is true
         await autoScroll(page);
@@ -152,8 +172,10 @@ app.get('/screenshot', async (req, res) => {
         });
         return;
       }
+      const end = Date.now();
+      console.log(`[${new Date().toISOString()}] Screenshot processed for URL: ${url} in ${end - start} ms`);
     } catch (error) {
-      console.error(`Failed to capture screenshot: ${error.message}`);
+      console.error(`[${new Date().toISOString()}] Failed to capture screenshot: ${error.message}`);
       res.status(500).json({
         success: false,
         message: '上传失败',
@@ -163,7 +185,7 @@ app.get('/screenshot', async (req, res) => {
       });
     }
   }).catch(error => {
-    console.error(`Queue error: ${error.message}`);
+    console.error(`[${new Date().toISOString()}] Queue error: ${error.message}`);
     res.status(500).json({
       success: false,
       message: '系统错误',
@@ -175,7 +197,7 @@ app.get('/screenshot', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Screenshot service listening at http://localhost:${port}`);
+  console.log(`[${new Date().toISOString()}] Screenshot service listening at http://localhost:${port}`);
 });
 
 process.on('exit', async () => {
